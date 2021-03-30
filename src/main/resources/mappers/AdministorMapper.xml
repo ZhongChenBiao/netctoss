@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pxxy.mapper.AdministorMapper">
+    <!--基本字段-->
+    <sql id="Base_Column_List">
+        admin_id,admin_number,password,name,telephone,email,create_time,status
+    </sql>
+    <!--建立对应关系-->
+    <resultMap id="administorMap" type="administor">
+        <id column="admin_id" property="adminId"/>
+        <result column="admin_number" property="adminNumber"/>
+        <result column="password" property="password"/>
+        <result column="name" property="name"/>
+        <result column="telephone" property="telephone"/>
+        <result column="email" property="email"/>
+        <result column="create_time" property="createTime"/>
+        <result column="status" property="status"/>
+
+    </resultMap>
+    <!--根据管理员登录账号查询-->
+    <select id="findByAdminNumber" parameterType="string" resultMap="administorMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+         FROM administor WHERE admin_number = #{adminNumber} and status = 0
+    </select>
+    <!--根据管理员id查询权限-->
+    <select id="findAuthorityById" parameterType="int" resultType="int">
+        SELECT module_id FROM role_module WHERE role_id = (
+            SELECT role_id FROM administor_role WHERE administor_id=#{id}
+        )
+    </select>
+    <!--根据id查询管理员的密码-->
+    <select id="findPasswordById" parameterType="int" resultType="String">
+        select password from administor where admin_id = #{id}
+    </select>
+    <!--修改密码-->
+    <update id="updatePassword" parameterType="administor">
+        update administor set password = #{password} where admin_id = #{adminId}
+    </update>
+    <!--根据id查询该管理员所拥有的角色的id-->
+    <select id="findRoleIdById" parameterType="int" resultType="int">
+        select role_id from administor_role where administor_id = #{id}
+    </select>
+    <!--根据id查询管理员的详细信息-->
+    <select id="findById" parameterType="administor" resultMap="administorMap">
+        select admin_id,admin_number,name,telephone,email,create_time,status
+        from administor where admin_id = #{id}
+    </select>
+    <!--根据管理员id查询所拥有的角色id集合-->
+    <select id="findRoleIdsById" parameterType="int" resultType="int">
+        select role_id from administor_role where administor_id = #{id}
+    </select>
+    <!--修改管理员信息-->
+    <update id="updateMessage" parameterType="administor">
+        update administor set
+        <if test="name!=null and name != '' ">
+            name = #{name}
+        </if>
+        <if test="telephone!=null and telephone != '' ">
+            ,telephone = #{telephone}
+        </if>
+        <if test="email!=null and email != '' ">
+            ,email = #{email}
+        </if>
+        <if test="status!=null and status != '' ">
+            ,status = #{status}
+        </if>
+        where admin_id = #{adminId}
+    </update>
+    <!--查询所有管理员-->
+    <select id="findAll" resultMap="administorMap" >
+        select * from administor where status = 0
+    </select>
+    <!--删除管理员所拥有的所有角色-->
+    <delete id="deleteAllRole" parameterType="int" >
+        delete from administor_role where administor_id = #{id}
+    </delete>
+    <!--更新管理员所拥有的角色-->
+    <insert id="updateRoleMessage">
+        insert into administor_role(administor_id,role_id) values (#{administorId},#{roleId})
+    </insert>
+    <!--删除管理员，将其status设为2表示删除-->
+    <update id="deleteById" parameterType="int">
+        update administor set status = 2 where admin_id = #{id}
+    </update>
+    <!--增加管理员-->
+    <insert id="addAdministor" parameterType="administor">
+        <selectKey keyProperty="adminId" order="AFTER" resultType="java.lang.Integer">
+            select LAST_INSERT_ID()
+        </selectKey>
+        insert administor (admin_number,password,name,telephone,email,create_time,status)
+        values (#{adminNumber},#{password},#{name},#{telephone},#{email},#{createTime},#{status})
+    </insert>
+    <!--筛选拥有权限id为moduleId的角色id集合-->
+    <select id="findRoleIdsByModuleId" resultType="int">
+        select role_id  from role_module
+        <where>
+            <if test="list != null and list .size() > 0">
+                <foreach collection="list" open="role_id in ( " close=")" item="rid"
+                         separator=",">
+                    #{rid} and module_id = #{moduleId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <!--按照角色id查询拥有该角色的所有管理员的id-->
+    <select id="findAdminIdByRoleId" parameterType="int" resultType="int">
+        select administor_id from administor_role where role_id = #{roleId}
+    </select>
+    <!--查询id集合中的所有管理员-->
+    <select id="findByIds" parameterType="java.util.List" resultMap="administorMap">
+        select * from administor
+        <where>
+            <if test="list != null and list .size() > 0">
+                <foreach collection="list" open="admin_id in ( " close=")" item="aid"
+                         separator=",">
+                    #{aid}
+                </foreach>
+            </if>
+        </where>
+    </select>
+</mapper>

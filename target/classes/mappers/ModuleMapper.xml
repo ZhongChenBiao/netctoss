@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pxxy.mapper.ModuleMapper">
+    <resultMap id="moduleMap" type="module">
+        <id column="module_id" property="moduleId"></id>
+        <result column="name" property="name"></result>
+    </resultMap>
+    <!--根据id集合查询-->
+    <select id="findAllModule" parameterType="java.util.List" resultMap="moduleMap">
+        select * from module m
+        <where>
+            <if test="list != null and list .size() > 0">
+                <foreach collection="list" open="module_id in ( " close=")" item="mid"
+                         separator=",">
+                    #{mid}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <!--查询模块名称-->
+    <select id="findModuleNameById" parameterType="int" resultType="String">
+        select name from module where module_id = #{moduleId}
+    </select>
+</mapper>

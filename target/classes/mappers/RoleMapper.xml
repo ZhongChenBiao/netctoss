@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pxxy.mapper.RoleMapper">
+    <resultMap id="roleMap" type="role">
+        <id column="role_id" property="roleId"></id>
+        <result column="name" property="name"></result>
+        <collection property="modules" ofType="module">
+            <id column="module_id" property="moduleId"></id>
+            <result column="name" property="name"></result>
+        </collection>
+    </resultMap>
+
+    <!--根据id查询-->
+    <select id="findById" parameterType="int" resultType="role">
+        select * from role where role_id = #{id}
+    </select>
+    <!--根据遍历list中的id查询role-->
+    <select id="findByList" parameterType="java.util.List" resultMap="roleMap">
+        select * from role a
+        <where>
+            <if test="list != null and list .size() > 0">
+                <foreach collection="list" open="role_id in ( " close=")" item="rid"
+                         separator=",">
+                    #{rid}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <!--查询所有的角色-->
+    <select id="findAll" resultMap="roleMap">
+        select * from role
+    </select>
+    <!--查询所有角色及其所对应的权限-->
+    <select id="findAllAndModule" resultMap="roleMap">
+       SELECT m.*,r.role_id ,r.name AS role_name FROM role r
+        LEFT OUTER JOIN role_module rm ON r.role_id = rm.role_id
+        LEFT OUTER JOIN module m ON m.module_id = rm.module_id ORDER BY role_id
+    </select>
+    <!--添加角色-->
+    <insert id="addRole" parameterType="string">
+        <selectKey keyProperty="roleId" order="AFTER" resultType="java.lang.Integer">
+            select LAST_INSERT_ID()
+        </selectKey>
+        insert into role (role_name) values (#{name})
+    </insert>
+    <!--给角色赋予权限-->
+    <insert id="addModuleForRole">
+        insert into role_module(role_id,module_id) values (#{roleId},#{moduleId})
+    </insert>
+    <!--删除角色被赋予的权限-->
+    <delete id="deleteMiddleModule" parameterType="int">
+        delete from role_module where role_id = #{roleId}
+    </delete>
+    <!--删除管理员被赋予的角色-->
+    <delete id="deleteRoleForAdministor" parameterType="int">
+        delete from administor_role where role_id = #{roleId}
+    </delete>
+    <!--删除角色-->
+    <delete id="deleteRoleById" parameterType="int">
+        delete from role where role_id = #{roleId}
+    </delete>
+    <!--根据id查询角色-->
+    <select id="findRoleById" parameterType="int" resultMap="roleMap">
+        select * from role where role_id = #{roleId}
+    </select>
+    <!--查询角色拥有权限的id-->
+    <select id="findAllModuleIds" parameterType="int" resultType="int">
+        select * from role_module where role_id = #{roleId}
+    </select>
+    <!--修改角色信息-->
+    <update id="ModifyRole" parameterType="role">
+        update role set name = #{name} where role_id = #{roleId}
+    </update>
+    <!--更新权限-->
+    <insert id="updateModule" >
+        insert into role_module (role_id, module_id) values (#{roleId}, #{moduleId})
+    </insert>
+    <!--查询名称为name的角色的id-->
+    <select id="findRoleIdByName" parameterType="string" resultType="java.lang.Integer">
+        select role_id as roleId from role where name = #{name}
+    </select>
+    <!--按模块id来查询拥有该权限角色的id-->
+    <select id="findRoleIdByModuleId" parameterType="int" resultType="java.lang.Integer">
+        select role_id as roleId from role_module where module_id = #{moduleId}
+    </select>
+</mapper>
